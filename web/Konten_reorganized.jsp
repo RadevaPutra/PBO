@@ -1,0 +1,1054 @@
+<%@page contentType="text/html" pageEncoding="UTF-8" %>
+    <%@page import="java.util.List" %>
+        <%@page import="Models.Pesawat" %>
+            <%@page import="Models.komentar" %>
+                <%@page import="Models.User" %>
+                    <%@page import="controller.komentarcontroller" %>
+
+                        <% User loggedInUser=(User) session.getAttribute("user"); List<Pesawat> listPesawat = (List
+                            <Pesawat>) request.getAttribute("listPesawat");
+
+                                String activePage = (String) request.getAttribute("activePage");
+                                if (activePage == null || activePage.isEmpty()) {
+                                activePage = "home";
+                                }
+                                String currentKategori = (String) request.getAttribute("currentKategori");
+                                String currentSub = (String) request.getAttribute("currentSub");
+                                if (activePage.equals("kategori") && (currentKategori == null
+                                || currentKategori.isEmpty())) {
+                                currentKategori = "komersial";
+                                }
+                                String displaySub = (currentSub != null) ? currentSub.replace("_", " ") : "";
+                                String tableTitle = (currentKategori != null) ? "DATA " + currentKategori.toUpperCase()
+                                + (displaySub.isEmpty() ? "" : " - " + displaySub.toUpperCase()) : "";
+                                String topikAktif = (!displaySub.isEmpty()) ? displaySub : (currentKategori != null
+                                ? currentKategori : "Umum");
+                                %>
+
+                                <!DOCTYPE html>
+                                <html>
+
+                                <head>
+                                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                                    <title>WikiAir - Dashboard Penerbangan</title>
+                                    <style>
+                                        body {
+                                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                            background-color: #f0f2f5;
+                                            margin: 0;
+                                        }
+
+                                        .header {
+                                            background-color: #1a1a1a;
+                                            color: white;
+                                            padding: 15px 50px;
+                                            display: flex;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                                            position: sticky;
+                                            top: 0;
+                                            z-index: 1000;
+                                        }
+
+                                        .header a {
+                                            color: #ccc;
+                                            text-decoration: none;
+                                            margin-left: 25px;
+                                            font-weight: 600;
+                                            transition: 0.3s;
+                                        }
+
+                                        .header a.active {
+                                            color: #ffcc00;
+                                        }
+
+                                        .header a:hover {
+                                            color: #fff;
+                                        }
+
+                                        .logo-text {
+                                            font-size: 1.8em;
+                                            font-weight: bold;
+                                            color: white;
+                                            letter-spacing: 1px;
+                                        }
+
+                                        .main-content {
+                                            display: flex;
+                                            max-width: 1400px;
+                                            margin: 30px auto;
+                                            padding: 0 20px;
+                                            gap: 30px;
+                                        }
+
+                                        .content-left {
+                                            flex: 3;
+                                        }
+
+                                        .sidebar-right {
+                                            flex: 1;
+                                        }
+
+                                        .content-box,
+                                        .sidebar-box {
+                                            background: white;
+                                            padding: 25px;
+                                            border-radius: 8px;
+                                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                                            margin-bottom: 25px;
+                                        }
+
+                                        .dashboard-header {
+                                            border-bottom: 3px solid #ffcc00;
+                                            display: inline-block;
+                                            padding-bottom: 10px;
+                                            margin-bottom: 25px;
+                                            color: #1a1a1a;
+                                        }
+
+                                        /* Breaking News Styles */
+                                        .breaking-news {
+                                            background: #1a1a1a;
+                                            color: white;
+                                            padding: 15px;
+                                            border-radius: 8px;
+                                            margin-bottom: 25px;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 15px;
+                                            overflow: hidden;
+                                        }
+
+                                        .breaking-tag {
+                                            background: #ff4444;
+                                            padding: 4px 12px;
+                                            border-radius: 4px;
+                                            font-weight: bold;
+                                            font-size: 0.8em;
+                                            animation: pulse 1.5s infinite;
+                                            flex-shrink: 0;
+                                        }
+
+                                        /* News Grid Styles */
+                                        .news-grid {
+                                            display: grid;
+                                            grid-template-columns: 1fr 1fr;
+                                            gap: 20px;
+                                        }
+
+                                        .news-card {
+                                            border: 1px solid #eee;
+                                            border-radius: 8px;
+                                            overflow: hidden;
+                                            background: #fff;
+                                            transition: 0.3s;
+                                        }
+
+                                        .news-card:hover {
+                                            transform: translateY(-5px);
+                                            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+                                        }
+
+                                        .news-img {
+                                            width: 100%;
+                                            height: 200px;
+                                            object-fit: cover;
+                                        }
+
+                                        .news-content {
+                                            padding: 15px;
+                                        }
+
+                                        .news-tag {
+                                            display: inline-block;
+                                            background: #007bff;
+                                            color: white;
+                                            padding: 3px 8px;
+                                            font-size: 0.7em;
+                                            border-radius: 3px;
+                                            font-weight: bold;
+                                            text-transform: uppercase;
+                                            margin-bottom: 10px;
+                                        }
+
+                                        .news-title {
+                                            font-size: 1.15em;
+                                            font-weight: bold;
+                                            margin-bottom: 8px;
+                                            color: #1a1a1a;
+                                            line-height: 1.4;
+                                        }
+
+                                        .news-desc {
+                                            font-size: 0.9em;
+                                            color: #666;
+                                            line-height: 1.5;
+                                        }
+
+                                        /* About Page Styles */
+                                        .about-hero {
+                                            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=1200');
+                                            background-size: cover;
+                                            background-position: center;
+                                            color: white;
+                                            padding: 70px 40px;
+                                            border-radius: 8px;
+                                            text-align: center;
+                                            margin-bottom: 30px;
+                                        }
+
+                                        .about-feature {
+                                            display: grid;
+                                            grid-template-columns: 1fr 1fr;
+                                            gap: 20px;
+                                            margin-top: 30px;
+                                        }
+
+                                        .feature-item {
+                                            background: #f8f9fa;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            border-left: 5px solid #ffcc00;
+                                            transition: 0.3s;
+                                        }
+
+                                        .feature-item:hover {
+                                            background: #fff;
+                                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                                        }
+
+                                        /* Utility & Table */
+                                        .large-image {
+                                            width: 100%;
+                                            height: 450px;
+                                            object-fit: cover;
+                                            border-radius: 8px;
+                                            margin-bottom: 20px;
+                                        }
+
+                                        .category-menu a {
+                                            display: block;
+                                            padding: 12px 15px;
+                                            background: #f8f9fa;
+                                            color: #333;
+                                            text-decoration: none;
+                                            border-radius: 5px;
+                                            margin-bottom: 10px;
+                                            border-left: 4px solid transparent;
+                                            transition: 0.2s;
+                                        }
+
+                                        .category-menu a.active-cat {
+                                            border-left-color: #ffcc00;
+                                            background: #e9ecef;
+                                            color: #007bff;
+                                            font-weight: bold;
+                                        }
+
+                                        .data-table {
+                                            width: 100%;
+                                            border-collapse: collapse;
+                                            background: white;
+                                            border-radius: 8px;
+                                            overflow: hidden;
+                                        }
+
+                                        .data-table th {
+                                            background-color: #333;
+                                            color: white;
+                                            padding: 15px;
+                                            text-align: left;
+                                        }
+
+                                        .data-table td {
+                                            padding: 15px;
+                                            border-bottom: 1px solid #eee;
+                                        }
+
+                                        .airplane-card img {
+                                            width: 100%;
+                                            height: auto;
+                                            object-fit: cover;
+                                            border-bottom: 3px solid #ffc107;
+                                            /* Garis kuning seperti di gambar */
+                                        }
+
+                                        @keyframes pulse {
+                                            0% {
+                                                opacity: 1;
+                                            }
+
+                                            50% {
+                                                opacity: 0.6;
+                                            }
+
+                                            100% {
+                                                opacity: 1;
+                                            }
+                                        }
+                                    </style>
+                                </head>
+
+                                <body>
+
+                                    <div class="header">
+                                        <div class="logo-text">✈️ WikiAir</div>
+                                        <nav>
+                                            <% if (loggedInUser !=null) {%>
+                                                <a href="web?page=home" class="<%= activePage.equals(" home") ? "active"
+                                                    : "" %>">HOME</a>
+                                                <a href="web?page=kategori" class="<%= activePage.equals(" kategori")
+                                                    ? "active" : "" %>">KATEGORI</a>
+                                                <a href="web?page=about" class="<%= activePage.equals(" about")
+                                                    ? "active" : "" %>">ABOUT</a>
+                                                <a href="login?action=logout" style="color: #ff4444;">LOGOUT</a>
+                                                <% } %>
+                                        </nav>
+                                    </div>
+
+                                    <div class="main-content">
+                                        <div class="content-left">
+                                            <% if (activePage.equals("home")) { %>
+                                                <div class="content-box">
+                                                    <h2 class="dashboard-header">Aviation Dashboard</h2>
+
+                                                    <div class="breaking-news">
+                                                        <div class="breaking-tag">BREAKING</div>
+                                                        <marquee behavior="scroll" direction="left" scrollamount="6">
+                                                            🚀 Rolls-Royce Sukses Uji Coba Mesin UltraFan dengan Bahan
+                                                            Bakar 100% SAF | ✈️ Airbus Memperkenalkan Desain Pesawat
+                                                            Bertenaga Hidrogen 'ZEROe' | 🔋 Pesawat Listrik Alice
+                                                            Selesaikan Penerbangan Perdana...
+                                                        </marquee>
+                                                    </div>
+
+                                                    <div class="news-grid">
+                                                        <div class="news-card">
+                                                            <img src="img/jetEngine.jpg" class="news-img"
+                                                                alt="Jet Engine">
+                                                            <div class="news-content">
+                                                                <span class="news-tag" style="background: #28a745;">Tech
+                                                                    Breakthrough</span>
+                                                                <div class="news-title">Uji Coba Mesin Ultra-Fan
+                                                                    Terbesar</div>
+                                                                <p class="news-desc">Rolls-Royce baru saja
+                                                                    menyelesaikan
+                                                                    pengujian darat untuk UltraFan, mesin turbofan
+                                                                    terbesar dan paling efisien di dunia saat ini.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="news-card">
+                                                            <img src="img/supersonic.jpg" class="news-img"
+                                                                alt="Supersonic Jet">
+                                                            <div class="news-content">
+                                                                <span class="news-tag">Trending Now</span>
+                                                                <div class="news-title">Overture: Masa Depan
+                                                                    Supersonik
+                                                                </div>
+                                                                <p class="news-desc">Boom Supersonic menghidupkan
+                                                                    348: kembali impian terbang secepat suara. Pesawat
+                                                                    349: 'Overture' diklaim mampu terbang lintas benua
+                                                                    2x
+                                                                    350: lebih cepat.</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <% } else if (activePage.equals("about")) { %>
+                                                    <div class="content-box">
+                                                        <div class="about-hero">
+                                                            <h1 style="margin: 0; font-size: 2.5em;">WikiAir
+                                                                360: Encyclopedia</h1>
+                                                            <p style="color: #ffcc00; font-size: 1.2em;">Platform
+                                                                362: Terpadu Informasi Kedirgantaraan Dunia</p>
+                                                        </div>
+                                                        <h3>Apa itu WikiAir?</h3>
+                                                        <p style="line-height: 1.8; color: #444;">WikiAir adalah
+                                                            367: platform ensiklopedia digital modern yang dirancang
+                                                            khusus
+                                                            368: untuk menyajikan data akurat mengenai berbagai unit
+                                                            pesawat
+                                                            369: dari seluruh dunia. Kami berkomitmen untuk menyediakan
+                                                            370: sumber edukasi yang interaktif bagi antusias
+                                                            penerbangan dan
+                                                            371: profesional kedirgantaraan.</p>
+                                                        <div class="about-feature">
+                                                            <div class="feature-item">
+                                                                <h4>🔍 Katalog Spesifikasi Lengkap</h4>
+                                                                <p style="font-size: 0.9em; color: #666;">Data
+                                                                    teknis
+                                                                    377: mulai dari pabrikan, operator, hingga jenis
+                                                                    mesin
+                                                                    378: dari berbagai kategori pesawat.</p>
+                                                            </div>
+                                                            <div class="feature-item">
+                                                                <h4>📡 Update Tren Global</h4>
+                                                                <p style="font-size: 0.9em; color: #666;">Informasi
+                                                                    383: terkini mengenai teknologi mesin hidrogen,
+                                                                    pesawat
+                                                                    384: listrik, dan inovasi kabin terbaru.</p>
+                                                            </div>
+                                                            <div class="feature-item">
+                                                                <h4>💬 Diskusi Komunitas</h4>
+                                                                <p style="font-size: 0.9em; color: #666;">Ruang
+                                                                    389: interaksi bagi pengguna untuk berdiskusi
+                                                                    mengenai
+                                                                    390: topik-topik dirgantara favorit mereka.</p>
+                                                            </div>
+                                                            <div class="feature-item">
+                                                                <h4>📊 Manajemen Armada</h4>
+                                                                <p style="font-size: 0.9em; color: #666;">
+                                                                    Pengelompokan
+                                                                    395: data yang sistematis antara pesawat Komersial,
+                                                                    <img src="data:image/webp;base64,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"
+                                                                        class="news-img" alt="Jet Engine">
+                                                                <div class="news-content">
+                                                                    <span class="news-tag"
+                                                                        style="background: #28a745;">Tech
+                                                                        Breakthrough</span>
+                                                                    <div class="news-title">Uji Coba Mesin Ultra-Fan
+                                                                        Terbesar</div>
+                                                                    <p class="news-desc">Rolls-Royce baru saja
+                                                                        menyelesaikan
+                                                                        pengujian darat untuk UltraFan, mesin turbofan
+                                                                        terbesar dan paling efisien di dunia saat ini.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="news-card">
+                                                                <img src="data:image/webp;base64,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"
+                                                                    class="news-img" alt="Supersonic Jet">
+                                                                <div class="news-content">
+                                                                    <span class="news-tag">Trending Now</span>
+                                                                    <div class="news-title">Overture: Masa Depan
+                                                                        Supersonik
+                                                                    </div>
+                                                                    <p class="news-desc">Boom Supersonic menghidupkan
+                                                                        kembali impian terbang secepat suara. Pesawat
+                                                                        'Overture' diklaim mampu terbang lintas benua 2x
+                                                                        lebih cepat.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <% } else if (activePage.equals("about")) { %>
+                                                        <div class="content-box">
+                                                            <div class="about-hero">
+                                                                <h1 style="margin: 0; font-size: 2.5em;">WikiAir
+                                                                    Encyclopedia</h1>
+                                                                <p style="color: #ffcc00; font-size: 1.2em;">Platform
+                                                                    Terpadu Informasi Kedirgantaraan Dunia</p>
+                                                            </div>
+
+                                                            <h3>Apa itu WikiAir?</h3>
+                                                            <p style="line-height: 1.8; color: #444;">WikiAir adalah
+                                                                platform ensiklopedia digital modern yang dirancang
+                                                                khusus
+                                                                untuk menyajikan data akurat mengenai berbagai unit
+                                                                pesawat
+                                                                dari seluruh dunia. Kami berkomitmen untuk menyediakan
+                                                                sumber edukasi yang interaktif bagi antusias penerbangan
+                                                                dan
+                                                                profesional kedirgantaraan.</p>
+
+                                                            <div class="about-feature">
+                                                                <div class="feature-item">
+                                                                    <h4>🔍 Katalog Spesifikasi Lengkap</h4>
+                                                                    <p style="font-size: 0.9em; color: #666;">Data
+                                                                        teknis
+                                                                        mulai dari pabrikan, operator, hingga jenis
+                                                                        mesin
+                                                                        dari berbagai kategori pesawat.</p>
+                                                                </div>
+                                                                <div class="feature-item">
+                                                                    <h4>📡 Update Tren Global</h4>
+                                                                    <p style="font-size: 0.9em; color: #666;">Informasi
+                                                                        terkini mengenai teknologi mesin hidrogen,
+                                                                        pesawat
+                                                                        listrik, dan inovasi kabin terbaru.</p>
+                                                                </div>
+                                                                <div class="feature-item">
+                                                                    <h4>💬 Diskusi Komunitas</h4>
+                                                                    <p style="font-size: 0.9em; color: #666;">Ruang
+                                                                        interaksi bagi pengguna untuk berdiskusi
+                                                                        mengenai
+                                                                        topik-topik dirgantara favorit mereka.</p>
+                                                                </div>
+                                                                <div class="feature-item">
+                                                                    <h4>📊 Manajemen Armada</h4>
+                                                                    <p style="font-size: 0.9em; color: #666;">
+                                                                        Pengelompokan
+                                                                        data yang sistematis antara pesawat Komersial,
+                                                                        Tempur, dan Kargo.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <%-- Bagian Halaman Kategori --%>
+                                                            <%-- Bagian Halaman Kategori --%>
+                                                                <% } else if ("kategori".equals(activePage)) { String
+                                                                    displayKategori=(currentKategori !=null &&
+                                                                    !currentKategori.isEmpty()) ?
+                                                                    currentKategori.toUpperCase() : "KOMERSIAL" ; %>
+                                                                    <div class="content-box">
+                                                                        <%-- 1. Judul Dinamis dengan Penanganan Null
+                                                                            --%>
+                                                                            <h3 class="dashboard-header"
+                                                                                style="text-transform: uppercase; font-weight: bold; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">
+                                                                                DATA PESAWAT <%= displayKategori %>
+                                                                                    <% if (!displaySub.isEmpty()) { %>
+                                                                                        <span style="color: #7f8c8d;"> -
+                                                                                            <%= displaySub %>
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                            </h3>
+
+
+                                                                            <%-- 2. Logika Gambar Utama --%>
+                                                                                <div class="image-container"
+                                                                                    style="margin-bottom: 25px; text-align: center;">
+                                                                                    <% String
+                                                                                        imageUrl="https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=1200"
+                                                                                        ; if
+                                                                                        ("tempur".equalsIgnoreCase(currentKategori))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1517976384346-3136801d605d?w=1200"
+                                                                                        ; if
+                                                                                        ("pesawat_jet".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1527482823611-664429938360?w=1200"
+                                                                                        ; } else if
+                                                                                        ("pesawat_bomber".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1200"
+                                                                                        ; } else if
+                                                                                        ("pesawat_tempur_sergap".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1470218091926-22a08a325802?w=1200"
+                                                                                        ; } } else if
+                                                                                        ("kargo".equalsIgnoreCase(currentKategori))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1586333248416-20d746c1e693?w=1200"
+                                                                                        ; if
+                                                                                        ("kargo_militer".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1200"
+                                                                                        ; } } else {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1544016768-982d1554f0b9?w=1200"
+                                                                                        ; if
+                                                                                        ("penumpang".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1520437358207-323b43b50729?w=1200"
+                                                                                        ; } else if
+                                                                                        ("private_jet".equals(currentSub))
+                                                                                        {
+                                                                                        imageUrl="https://images.unsplash.com/photo-1542296332-2b4473faf563?w=1200"
+                                                                                        ; } } %>
+                                                                                        <img src="<%= imageUrl %>"
+                                                                                            alt="Foto Unit Pesawat"
+                                                                                            class="large-image"
+                                                                                            style="width: 100%; height: 380px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); transition: 0.3s;">
+                                                                                </div>
+
+                                                                                <%-- 3. Tombol Navigasi Sub-Unit Dinamis
+                                                                                    --%>
+                                                                                    <div class="unit-selector"
+                                                                                        style="text-align: center; background: #fdfdfd; padding: 20px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 20px;">
+                                                                                        <p
+                                                                                            style="margin-bottom: 15px; font-weight: 600; color: #2c3e50;">
+                                                                                            Pilih Jenis Unit Pesawat
+                                                                                            <%=(currentKategori !=null)
+                                                                                                ?
+                                                                                                currentKategori.substring(0,
+                                                                                                1).toUpperCase() +
+                                                                                                currentKategori.substring(1).toLowerCase()
+                                                                                                : "Komersial" %>:
+                                                                                        </p>
+
+                                                                                        <%-- Keterangan Halaman --%>
+                                                                                            <div
+                                                                                                style="text-align: center; color: #7f8c8d; font-size: 0.95em; background: #fff; padding: 10px; border-radius: 5px;">
+                                                                                                Menampilkan data untuk
+                                                                                                kategori <strong>
+                                                                                                    <%= (currentKategori
+                                                                                                        !=null) ?
+                                                                                                        currentKategori.toUpperCase()
+                                                                                                        : "KOMERSIAL" %>
+                                                                                                </strong>
+                                                                                                <% if (currentSub !=null
+                                                                                                    &&
+                                                                                                    !currentSub.isEmpty())
+                                                                                                    {%>
+                                                                                                    - Jenis Unit:
+                                                                                                    <strong>
+                                                                                                        <%= currentSub.replace("_", " "
+                                                                                                            ).toUpperCase()%>
+                                                                                                    </strong>
+                                                                                                    <% } else { %>
+                                                                                                        (Semua Unit)
+                                                                                                        <% } %>
+                                                                                            </div>
+                                                                                    </div>
+                                                                                    <% } %>
+
+<% if (activePage.equals("kategori")) {%>
+                                        <div>
+                                            <div class="content-box">
+                                                <h3 class="dashboard-header">
+                                                    <%= tableTitle%>
+                                                </h3>
+
+                                                <%-- LOGIKA DESKRIPSI DINAMIS --%>
+                                                    <% String deskripsiPesawat="" ; if
+                                                        ("Airbus_A350".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Airbus A350 XWB</strong> adalah keluarga pesawat jet berbadan lebar jarak jauh yang dikembangkan oleh Airbus. Pesawat ini dikenal dengan efisiensi bahan bakarnya yang tinggi berkat penggunaan material komposit serat karbon canggih pada badan dan sayapnya. A350 menawarkan kenyamanan kabin superior dengan kelembapan udara yang lebih tinggi dan tekanan kabin yang lebih rendah."
+                                                        ; } else if ("Boeing_787".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Boeing 787 Dreamliner</strong> adalah pesawat jet berbadan lebar revolusioner yang mengutamakan efisiensi dan kenyamanan penumpang. Dengan jendela kabin terbesar di industri dan sistem pencahayaan LED dinamis, 787 dirancang untuk mengurangi jetlag dan memberikan pengalaman terbang yang tak tertandingi."
+                                                        ; } else if ("Airbus_A380".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Airbus A380</strong> adalah pesawat penumpang terbesar di dunia, sebuah keajaiban teknik dengan dek ganda penuh. Pesawat raksasa ini mampu mengangkut lebih dari 500 penumpang dalam konfigurasi tiga kelas standar, menawarkan kemewahan dan ruang yang belum pernah ada sebelumnya di angkasa."
+                                                        ; } else if ("F-35".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Lockheed Martin F-35 Lightning II</strong> adalah pesawat tempur siluman multiperan generasi ke-5 yang paling canggih di dunia. Menggabungkan kemampuan siluman mutakhir, kecepatan supersonik, dan kelincahan ekstrem, F-35 dirancang untuk mendominasi pertempuran udara dan serangan darat."
+                                                        ; } else if ("Sukhoi_Su-27SK".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Sukhoi Su-27SK</strong> adalah varian ekspor dari pesawat tempur superioritas udara legendaris Rusia. Dikenal dengan manuverabilitas supernya (cobra maneuver), pesawat ini memiliki jangkauan jarak jauh dan kemampuan membawa muatan senjata berat."
+                                                        ; } else if ("Lockheed_F-117A".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>F-117A Nighthawk</strong> adalah pesawat operasional pertama di dunia yang dirancang sepenuhnya berdasarkan teknologi siluman (stealth). Bentuknya yang unik dirancang untuk memantulkan gelombang radar, menjadikannya hampir tak terlihat oleh sistem pertahanan musuh."
+                                                        ; } else if ("Boeing_737-800F".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Boeing 737-800BCF (Boeing Converted Freighter)</strong> adalah tulang punggung logistik kargo jarak menengah. Pesawat ini menawarkan efisiensi operasional tinggi dan kapasitas angkut yang fleksibel, menjadikannya pilihan utama bagi maskapai kargo ekspres global."
+                                                        ; } else if ("Airbus_A321F".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Airbus A321P2F (Passenger to Freighter)</strong> adalah solusi kargo modern yang menawarkan kapasitas volume terbaik di kelasnya. Dengan kemampuan memuat kontainer di dek utama dan dek bawah, pesawat ini sangat efisien untuk operasi logistik e-commerce."
+                                                        ; } else if ("Antonov_An-124".equals(currentSub)) {
+                                                        deskripsiPesawat="<strong>Antonov An-124 Ruslan</strong> adalah salah satu pesawat kargo militer strategis terbesar di dunia. Dengan kemampuan membuka hidung pesawat (nose cargo door) untuk memuat kargo berukuran raksasa, An-124 sering digunakan untuk misi kemanusiaan dan pengangkutan alat berat."
+                                                        ; } if (!deskripsiPesawat.isEmpty()) { %>
+                                                        <div class="description-box"
+                                                            style="background: #fff; padding: 25px; border-radius: 10px; margin-bottom: 25px; border-left: 6px solid #ffcc00; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                                            <h4
+                                                                style="margin-top: 0; color: #2c3e50; font-size: 1.2em; margin-bottom: 10px;">
+                                                                📖 Mengenal Lebih Dekat</h4>
+                                                            <p
+                                                                style="color: #555; line-height: 1.7; font-size: 1.05em; margin: 0;">
+                                                                <%= deskripsiPesawat %>
+                                                            </p>
+                                                        </div>
+                                                        <% } %>
+                                                            <table class="data-table">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Kode</th>
+                                                                        <th>Jenis Pesawat
+                                                                        </th>
+                                                                        <th>Operator</th>
+                                                                        <th>Mesin</th>
+                                                                        <th>Pabrikan</th>
+                                                                        <th>Tahun</th>
+                                                                        <th>Negara</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <% if ("Boeing_787".equals(currentSub)) { %>
+                                                                        <tr>
+                                                                            <td>JA873A</td>
+                                                                            <td>Boeing 787-9
+                                                                                Dreamliner
+                                                                            </td>
+                                                                            <td>All Nippon
+                                                                                Airways</td>
+                                                                            <td>GEnx-1B</td>
+                                                                            <td>Boeing</td>
+                                                                            <td>2014</td>
+                                                                            <td>Jepang</td>
+                                                                        </tr>
+                                                                        <% } else if ("Airbus_A350".equals(currentSub))
+                                                                            { %>
+
+                                                                            <tr>
+                                                                                <td>F-WNZF
+                                                                                </td>
+                                                                                <td>Airbus
+                                                                                    A350-900
+                                                                                </td>
+                                                                                <td>Airbus
+                                                                                    Test
+                                                                                    Fleet
+                                                                                </td>
+                                                                                <td>Trent
+                                                                                    XWB</td>
+                                                                                <td>Airbus
+                                                                                </td>
+                                                                                <td>2013
+                                                                                </td>
+                                                                                <td>Prancis
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>9V-SMC
+                                                                                </td>
+                                                                                <td>Airbus
+                                                                                    A350-900
+                                                                                </td>
+                                                                                <td>Singapore
+                                                                                    Airlines
+                                                                                </td>
+                                                                                <td>Trent
+                                                                                    XWB</td>
+                                                                                <td>Airbus
+                                                                                </td>
+                                                                                <td>2016
+                                                                                </td>
+                                                                                <td>Singapura
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>A7-ALA
+                                                                                </td>
+                                                                                <td>Airbus
+                                                                                    A350-900
+                                                                                </td>
+                                                                                <td>Qatar
+                                                                                    Airways
+                                                                                </td>
+                                                                                <td>Trent
+                                                                                    XWB</td>
+                                                                                <td>Airbus
+                                                                                </td>
+                                                                                <td>2014
+                                                                                </td>
+                                                                                <td>Qatar
+                                                                                </td>
+                                                                            </tr>
+                                                                            <% } else if
+                                                                                ("Airbus_A380".equals(currentSub)) { %>
+                                                                                <tr>
+                                                                                    <td>A6-EEO
+                                                                                    </td>
+                                                                                    <td>Airbus
+                                                                                        A380-800
+                                                                                    </td>
+                                                                                    <td>Emirates
+                                                                                    </td>
+                                                                                    <td>GP7200
+                                                                                    </td>
+                                                                                    <td>Airbus
+                                                                                    </td>
+                                                                                    <td>2012
+                                                                                    </td>
+                                                                                    <td>UEA
+                                                                                    </td>
+                                                                                </tr>
+
+                                                                                <% } else if ("F-35".equals(currentSub))
+                                                                                    { %>
+                                                                                    <tr>
+                                                                                        <td>AF-01
+                                                                                        </td>
+                                                                                        <td>F-35A
+                                                                                            Lightning
+                                                                                            II
+                                                                                        </td>
+                                                                                        <td>US
+                                                                                            Air
+                                                                                            Force
+                                                                                        </td>
+                                                                                        <td>P&W
+                                                                                            F135
+                                                                                        </td>
+                                                                                        <td>Lockheed
+                                                                                            Martin
+                                                                                        </td>
+                                                                                        <td>2006
+                                                                                        </td>
+                                                                                        <td>Amerika
+                                                                                            Serikat
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <% } else if
+                                                                                        ("Sukhoi_Su-27SK".equals(currentSub))
+                                                                                        { %>
+                                                                                        <tr>
+                                                                                            <td>TS-2701
+                                                                                            </td>
+                                                                                            <td>Sukhoi
+                                                                                                Su-27SK
+                                                                                            </td>
+                                                                                            <td>TNI
+                                                                                                Angkatan
+                                                                                                Udara
+                                                                                            </td>
+                                                                                            <td>Lyulka
+                                                                                                AL-31F
+                                                                                            </td>
+                                                                                            <td>Sukhoi
+                                                                                            </td>
+                                                                                            <td>2003
+                                                                                            </td>
+                                                                                            <td>Rusia
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <% } else if
+                                                                                            ("Lockheed_F-117A".equals(currentSub))
+                                                                                            { %>
+                                                                                            <tr>
+                                                                                                <td>82-0806
+                                                                                                </td>
+                                                                                                <td>F-117A
+                                                                                                    Nighthawk
+                                                                                                </td>
+                                                                                                <td>US
+                                                                                                    Air
+                                                                                                    Force
+                                                                                                </td>
+                                                                                                <td>GE
+                                                                                                    F404
+                                                                                                </td>
+                                                                                                <td>Lockheed
+                                                                                                    Martin
+                                                                                                </td>
+                                                                                                <td>1982
+                                                                                                </td>
+                                                                                                <td>Amerika
+                                                                                                    Serikat
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                            <% } else if
+                                                                                                ("Boeing_737-800F".equals(currentSub))
+                                                                                                { %>
+                                                                                                <tr>
+                                                                                                    <td>N858AZ
+                                                                                                    </td>
+                                                                                                    <td>Boeing
+                                                                                                        737-800F
+                                                                                                    </td>
+                                                                                                    <td>Amazon
+                                                                                                        Air
+                                                                                                    </td>
+                                                                                                    <td>CFM56-7B
+                                                                                                    </td>
+                                                                                                    <td>Boeing
+                                                                                                    </td>
+                                                                                                    <td>2018
+                                                                                                    </td>
+                                                                                                    <td>Amerika
+                                                                                                        Serikat
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                                <% } else if
+                                                                                                    ("Airbus_A321F".equals(currentSub))
+                                                                                                    { %>
+                                                                                                    <tr>
+                                                                                                        <td>D-AEUC
+                                                                                                        </td>
+                                                                                                        <td>Airbus
+                                                                                                            A321-200P2F
+                                                                                                        </td>
+                                                                                                        <td>Lufthansa
+                                                                                                            Cargo
+                                                                                                        </td>
+                                                                                                        <td>IAE
+                                                                                                            V2500
+                                                                                                        </td>
+                                                                                                        <td>Airbus
+                                                                                                        </td>
+                                                                                                        <td>2021
+                                                                                                        </td>
+                                                                                                        <td>Jerman
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                    <% } else if
+                                                                                                        ("Antonov_An-124".equals(currentSub))
+                                                                                                        { %>
+                                                                                                        <tr>
+                                                                                                            <td>UR-82007
+                                                                                                            </td>
+                                                                                                            <td>Antonov
+                                                                                                                An-124
+                                                                                                                Ruslan
+                                                                                                            </td>
+                                                                                                            <td>Antonov
+                                                                                                                Airlines
+                                                                                                            </td>
+                                                                                                            <td>Progress
+                                                                                                                D-18T
+                                                                                                            </td>
+                                                                                                            <td>Antonov
+                                                                                                            </td>
+                                                                                                            <td>1982
+                                                                                                            </td>
+                                                                                                            <td>Ukraina
+                                                                                                            </td>
+                                                                                                        </tr>
+
+                                                                                                        <% } %>
+                                                                </tbody>
+                                                            </table>
+                                            </div>
+
+                                            <%-- 5. Menampilkan List Pesawat dari Database --%>
+                                                <% if (listPesawat !=null && !listPesawat.isEmpty()) { %>
+                                                    <div class="content-box">
+                                                        <h3 class="dashboard-header">Armada Terdaftar (Database)
+                                                        </h3>
+                                                        <div class="news-grid">
+                                                            <% for (Pesawat p : listPesawat) { %>
+                                                                <div class="news-card">
+                                                                    <div class="news-content">
+                                                                        <span class="news-tag">
+                                                                            <%= p.getID_Pesawat() %>
+                                                                        </span>
+                                                                        <div class="news-title">
+                                                                            <%= p.getNamaOperator() %>
+                                                                        </div>
+                                                                        <p class="news-desc">
+                                                                            <strong>
+                                                                                <%= p.getJenisPesawat() %>
+                                                                            </strong><br>
+                                                                            <%= p.getPabrikan() %> - <%=
+                                                                                    p.getTipe_mesin() %>
+                                                                        </p>
+                                                                        <span style="font-size: 0.8em; color: #888;">
+                                                                            <%= p.getKategori() %> | <%=
+                                                                                    p.getNegara_asal() %>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <% } %>
+                                                        </div>
+                                                    </div>
+                                                    <% } %>
+                                        </div>
+                                        </div>
+                                        <% } %>
+
+                                            </div>
+                                            </div>
+
+                                </body>
+
+                                </html>
+</div> <!-- End Content Left -->
+
+<div class="sidebar-right">
+
+                                            <% if (activePage.equals("home")) { %>
+                                                <div class="sidebar-box">
+                                                    <h3 style="margin-top: 0; font-size: 1.1em;">
+                                                        📊 Statistik WikiAir</h3>
+                                                    <p style="font-size: 0.9em; margin: 10px 0;">
+                                                        Total Data Pesawat: <strong>1,245
+                                                            unit</strong></p>
+                                                    <p style="font-size: 0.9em; margin: 10px 0;">
+                                                        Kontribusi Pengguna: <strong>890
+                                                            Diskusi</strong></p>
+                                                </div>
+                                                <% } %>
+
+                                                    <% if (activePage.equals("kategori")) { %>
+                                                        <div class="sidebar-box">
+                                                            <h3 style="margin-top:0;">
+                                                                Pilih Kategori</h3>
+                                                            <div class="category-menu">
+                                                                <a href="web?page=kategori&type=komersial" class="<%= "
+                                                                    komersial".equals(currentKategori) ? "active-cat"
+                                                                    : "" %>">
+
+                                                                    Pesawat Komersial
+                                                                </a>
+                                                                <a href="web?page=kategori&type=tempur" class="<%= "
+                                                                    tempur".equals(currentKategori) ? "active-cat" : ""
+                                                                    %>">
+
+                                                                    Pesawat Tempur
+                                                                </a>
+                                                                <a href="web?page=kategori&type=kargo" class="<%= "
+                                                                    kargo".equals(currentKategori) ? "active-cat" : ""
+                                                                    %>">
+
+                                                                    Pesawat Kargo
+                                                                </a>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="sidebar-box">
+                                                            <h4 style="margin-top:0;">Pilih
+                                                                Jenis Unit</h4>
+                                                            <select onchange="location.href = this.value;"
+                                                                style="width:100%; padding: 10px; border-radius: 5px;">
+                                                                <option value="">-- Pilih
+                                                                    Unit --</option>
+                                                                <% if ("komersial".equals(currentKategori)) {%>
+                                                                    <option
+                                                                        value="web?page=kategori&type=komersial&sub=Airbus_A350"
+                                                                        <%="Airbus_A350" .equals(currentSub)
+                                                                        ? "selected" : "" %>
+                                                                        >Airbus A350
+                                                                    </option>
+                                                                    <option
+                                                                        value="web?page=kategori&type=komersial&sub=Boeing_787"
+                                                                        <%="Boeing_787" .equals(currentSub) ? "selected"
+                                                                        : "" %>
+                                                                        >Boeing 787</option>
+                                                                    <option
+                                                                        value="web?page=kategori&type=komersial&sub=Airbus_A380"
+                                                                        <%="Airbus_A380" .equals(currentSub)
+                                                                        ? "selected" : "" %>
+                                                                        >Airbus A380
+                                                                    </option>
+                                                                    <% } else if ("tempur".equals(currentKategori)) {%>
+                                                                        <option
+                                                                            value="web?page=kategori&type=tempur&sub=F-35"
+                                                                            <%="F-35" .equals(currentSub) ? "selected"
+                                                                            : "" %>
+                                                                            >F-35
+                                                                            Lightning II
+                                                                        </option>
+                                                                        <option
+                                                                            value="web?page=kategori&type=tempur&sub=Sukhoi_Su-27SK"
+                                                                            <%="Sukhoi_Su-27SK" .equals(currentSub)
+                                                                            ? "selected" : "" %>
+                                                                            >Sukhoi
+                                                                            Su-27SK
+                                                                        </option>
+                                                                        <option
+                                                                            value="web?page=kategori&type=tempur&sub=Lockheed_F-117A"
+                                                                            <%="Lockheed_F-117A" .equals(currentSub)
+                                                                            ? "selected" : "" %>
+                                                                            >Lockheed
+                                                                            F-117A
+                                                                        </option>
+                                                                        <% } else if ("kargo".equals(currentKategori))
+                                                                            {%>
+                                                                            <option
+                                                                                value="web?page=kategori&type=kargo&sub=Boeing_737-800F"
+                                                                                <%="Boeing_737-800F" .equals(currentSub)
+                                                                                ? "selected" : "" %>
+                                                                                >Boeing
+                                                                                737-800F
+                                                                            </option>
+                                                                            <option
+                                                                                value="web?page=kategori&type=kargo&sub=Airbus_A321F"
+                                                                                <%="Airbus_A321F" .equals(currentSub)
+                                                                                ? "selected" : "" %>
+                                                                                >Airbus
+                                                                                A321F
+                                                                            </option>
+                                                                            <option
+                                                                                value="web?page=kategori&type=kargo&sub=Antonov_An-124"
+                                                                                <%="Antonov_An-124" .equals(currentSub)
+                                                                                ? "selected" : "" %>
+                                                                                >Antonov
+                                                                                An-124
+                                                                            </option>
+                                                                            <% } %>
+                                                            </select>
+                                                        </div>
+                                        </div>
+                                        <% } %>
+                                    </div>
+
+                                    
+</div>
+</div> <!-- End Main Content -->
+</body>
+</html>
